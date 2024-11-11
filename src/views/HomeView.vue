@@ -26,7 +26,10 @@
                   :lat-lng="[Number(place.lat), Number(place.lng)]"
                   class="markerInvisible"
                 >
-                  <l-icon icon-url="nothing" :icon-size="[0, 0]"></l-icon>
+                  <l-icon
+                    icon-url="https://codefornoto.github.io/images/map.png"
+                    :icon-size="[0, 0]"
+                  ></l-icon>
                   <l-tooltip
                     :options="{
                       permanent: true,
