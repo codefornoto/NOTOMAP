@@ -19,8 +19,13 @@
             >
             </l-tile-layer>
             <l-marker :lat-lng="tmpMarker"> </l-marker>
-            <l-marker v-for="place in places" :key="place.id" :lat-lng="[place.lat, place.lng]">
-              <!-- これがないとマーカーが表示されてしまう？ -->
+            <l-marker
+              v-for="place in places"
+              :key="place.id"
+              :lat-lng="[place.lat, place.lng]"
+              class="markerInvisible"
+            >
+              <l-icon icon-url="" :icon-size="[0, 0]"></l-icon>
               <l-tooltip
                 :options="{
                   permanent: true,
@@ -201,12 +206,6 @@ onMounted(async () => {
   top: 10px;
   right: 10px;
   z-index: 1000;
-}
-
-#leaflet-tooltip-113 {
-  background-color: transparent;
-  border: transparent;
-  box-shadow: none;
 }
 
 :deep(.custom-tooltip) {
