@@ -23,7 +23,7 @@
                 <l-marker
                   v-for="place in markerGroup"
                   :key="place.id"
-                  :lat-lng="[place.lat as number, place.lng as number]"
+                  :lat-lng="[Number(place.lat), Number(place.lng)]"
                   class="markerInvisible"
                 >
                   <l-icon icon-url="nothing" :icon-size="[0, 0]"></l-icon>
@@ -132,7 +132,7 @@ const category = ref('')
 
 const categorizedPlaces = ref<{ [key: string]: Marker[] }>({})
 const visibleCategories = ref<{ [key: string]: boolean }>({})
-const isCategoryVisible = (category: string) => {
+const isCategoryVisible = (category: string | number) => {
   return visibleCategories.value[category] !== false
 }
 
