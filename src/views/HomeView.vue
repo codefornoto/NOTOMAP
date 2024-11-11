@@ -75,18 +75,11 @@
             ></v-text-field>
           </v-col>
           <v-col cols="4">
-            <v-text-field
-              v-model="zoom"
-              type="number"
-              label="ズーム"
-              variant="outlined"
-            ></v-text-field>
+            <v-btn color="secondary" @click="register">Register</v-btn>
           </v-col>
+
           <v-col cols="4">
             <v-btn color="primary" @click="search">Search</v-btn>
-          </v-col>
-          <v-col cols="4">
-            <v-btn color="secondary" @click="register">Register</v-btn>
           </v-col>
           <v-col cols="12">
             <v-alert
@@ -110,17 +103,17 @@ import 'leaflet/dist/leaflet.css'
 import { LMap, LTileLayer, LMarker } from '@vue-leaflet/vue-leaflet'
 import { LTooltip } from '@vue-leaflet/vue-leaflet'
 import type { Marker } from '../types/marker'
-// import { useRoute } from 'vue-router'
-// const route = useRoute()
-// const mode = ref(false)
-// const mode = route.query.mode ? route.query.mode : false
+import { useRoute } from 'vue-router'
+const route = useRoute()
+const centerLat = route.query.lat ? route.query.lat : 37.39225471283128
+const centerLng = route.query.lng ? route.query.lng : 136.9037461280823
+const zoom = route.query.zoom ? ref(route.query.zoom) : ref(15)
 
 import { fetchMarkers } from '../services/getMarkers'
 import { registerMarker } from '../services/registerMarker'
 const places = ref<Marker[]>([])
 const windowSize = ref(12)
-const zoom = ref(15)
-const center = ref([37.39225471283128, 136.9037461280823])
+const center = ref([centerLat, centerLng])
 // const iconMarkers = L.featureGroup()
 const inputLat = ref(35.6769883)
 const inputLon = ref(139.7588499)
