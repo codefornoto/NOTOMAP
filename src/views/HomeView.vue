@@ -19,7 +19,7 @@
             >
             </l-tile-layer>
             <l-marker :lat-lng="tmpMarker"> </l-marker>
-            <l-marker v-for="place in places" :key="place.name" :lat-lng="[place.lat, place.lng]">
+            <l-marker v-for="place in places" :key="place.id" :lat-lng="[place.lat, place.lng]">
               <!-- これがないとマーカーが表示されてしまう？ -->
               <l-tooltip
                 :options="{
@@ -125,7 +125,7 @@ const category = ref('')
 
 const search = () => {
   center.value = [inputLat.value, inputLon.value]
-  markerLatLng.value = center.value
+  tmpMarker.value = center.value
 }
 
 const moveMarker = (e: { latlng?: { lat: number; lng: number } }) => {
