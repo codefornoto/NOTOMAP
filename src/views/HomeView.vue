@@ -23,7 +23,7 @@
                 <l-marker
                   v-for="place in markerGroup"
                   :key="place.id"
-                  :lat-lng="[place.lat, place.lng]"
+                  :lat-lng="[place.lat as number, place.lng as number]"
                   class="markerInvisible"
                 >
                   <l-icon icon-url="nothing" :icon-size="[0, 0]"></l-icon>
