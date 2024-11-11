@@ -7,6 +7,9 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 // https://vite.dev/config/
 export default defineConfig({
   base: '/NOTOMAP',
+  build: {
+    outDir: 'docs',
+  },
   plugins: [vue(), vueJsx()],
   resolve: {
     alias: {
