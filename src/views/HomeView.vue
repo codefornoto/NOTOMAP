@@ -107,7 +107,7 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 const centerLat = route.query.lat ? route.query.lat : 37.39225471283128
 const centerLng = route.query.lng ? route.query.lng : 136.9037461280823
-const zoom = route.query.zoom ? ref(route.query.zoom) : ref(15)
+const zoom = ref<number>(route.query.zoom ? Number(route.query.zoom) : 15)
 
 import { fetchMarkers } from '../services/getMarkers'
 import { registerMarker } from '../services/registerMarker'
@@ -123,7 +123,7 @@ const category = ref('')
 
 const search = () => {
   center.value = [inputLat.value, inputLon.value]
-  tmpMarker.value = center.value
+  tmpMarker.value = center.value as number[]
 }
 
 const moveMarker = (e: { latlng?: { lat: number; lng: number } }) => {
@@ -182,7 +182,6 @@ onMounted(async () => {
   try {
     const data = await fetchMarkers()
     places.value = data
-    console.log('Loaded markers:', places.value)
   } catch (error) {
     console.error('Error loading markers:', error)
   }

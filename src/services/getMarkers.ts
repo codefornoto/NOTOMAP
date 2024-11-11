@@ -16,8 +16,6 @@ export async function fetchMarkers() {
     const response = await fetch(GAS_URL)
     const data: MarkerResponse = await response.json()
 
-    console.log(data)
-
     if (data.status === 'success') {
       return data.data
     }
