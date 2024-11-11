@@ -1,26 +1,221 @@
-<script setup lang="ts">
-import 'leaflet/dist/leaflet.css'
-import { LMap, LTileLayer } from '@vue-leaflet/vue-leaflet'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-import { ref } from 'vue'
-
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({})
-
-const zoom = ref(2)
-</script>
-
 <template>
-  <div style="height: 600px; width: 800px">
-    <l-map ref="map" v-model:zoom="zoom" :center="[47.41322, -1.219482]">
-      <l-tile-layer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        layer-type="base"
-        name="OpenStreetMap"
-      ></l-tile-layer>
-    </l-map>
-  </div>
+  <v-container fluid class="pa-0 container-wrapper">
+    <v-app-bar-nav-icon class="menu-button" @click="openMenu"></v-app-bar-nav-icon>
+    <v-row class="ma-0">
+      <v-col class="pa-0" :cols="windowSize">
+        <div style="height: 100vh">
+          <l-map
+            ref="map"
+            :zoom="zoom"
+            :use-global-leaflet="false"
+            :center="center"
+            @click="moveMarker"
+          >
+            <l-tile-layer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              layer-type="base"
+              name="OpenStreetMap"
+              attribution="&copy; <a href='http://osm.org/copyright'>OpenStreetMap</a> contributors"
+            >
+            </l-tile-layer>
+            <l-marker :lat-lng="tmpMarker"> </l-marker>
+            <l-marker v-for="place in places" :key="place.name" :lat-lng="[place.lat, place.lng]">
+              <!-- これがないとマーカーが表示されてしまう？ -->
+              <l-tooltip
+                :options="{
+                  permanent: true,
+                  interactive: true,
+                  opacity: 0.9,
+                  className: 'custom-tooltip',
+                }"
+              >
+                {{ place.message || place.category }}
+              </l-tooltip>
+            </l-marker>
+          </l-map>
+        </div>
+      </v-col>
+      <v-col v-show="12 - windowSize !== 0" :cols="12 - windowSize">
+        <v-row class="pa-4 mt-6">
+          <v-col cols="6">
+            <v-text-field
+              v-model="inputLat"
+              label="緯度"
+              placeholder="緯度"
+              variant="outlined"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              v-model="inputLon"
+              label="経度"
+              placeholder="経度"
+              variant="outlined"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12">
+            <v-text-field
+              v-model="message"
+              label="メッセージ"
+              placeholder="好きなメッセージを入力して地図上に登録します"
+              variant="outlined"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="8">
+            <v-text-field
+              v-model="category"
+              label="category"
+              placeholder="カテゴリーを入力"
+              variant="outlined"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="4">
+            <v-text-field
+              v-model="zoom"
+              type="number"
+              label="ズーム"
+              variant="outlined"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="4">
+            <v-btn color="primary" @click="search">Search</v-btn>
+          </v-col>
+          <v-col cols="4">
+            <v-btn color="secondary" @click="register">Register</v-btn>
+          </v-col>
+          <v-col cols="12">
+            <v-alert
+              v-if="showAlert"
+              :type="alertType"
+              :text="alertMessage"
+              class="mt-4"
+              closable
+              @click:close="showAlert = false"
+            ></v-alert>
+          </v-col>
+        </v-row>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
-<style></style>
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import 'leaflet/dist/leaflet.css'
+import { LMap, LTileLayer, LMarker } from '@vue-leaflet/vue-leaflet'
+import { LTooltip } from '@vue-leaflet/vue-leaflet'
+import type { Marker } from '../types/marker'
+// import { useRoute } from 'vue-router'
+// const route = useRoute()
+// const mode = ref(false)
+// const mode = route.query.mode ? route.query.mode : false
+
+import { fetchMarkers } from '../services/getMarkers'
+import { registerMarker } from '../services/registerMarker'
+const places = ref<Marker[]>([])
+const windowSize = ref(12)
+const zoom = ref(15)
+const center = ref([37.39225471283128, 136.9037461280823])
+// const iconMarkers = L.featureGroup()
+const inputLat = ref(35.6769883)
+const inputLon = ref(139.7588499)
+const message = ref('メッセージを入力してregisterボタンを押してください')
+const tmpMarker = ref([35.6769883, 139.7588499])
+const category = ref('')
+
+const search = () => {
+  center.value = [inputLat.value, inputLon.value]
+  markerLatLng.value = center.value
+}
+
+const moveMarker = (e: { latlng?: { lat: number; lng: number } }) => {
+  if (!e.latlng) {
+    return
+  }
+  tmpMarker.value = [e.latlng.lat, e.latlng.lng]
+  inputLat.value = e.latlng.lat
+  inputLon.value = e.latlng.lng
+}
+
+function openMenu() {
+  if (windowSize.value == 8) {
+    windowSize.value = 12
+  } else {
+    windowSize.value = 8
+  }
+}
+
+const showAlert = ref(false)
+const alertMessage = ref('')
+const alertType = ref<'success' | 'error'>('success')
+
+const register = async () => {
+  try {
+    const newMarker = {
+      lat: inputLat.value.toString(),
+      lng: inputLon.value.toString(),
+      message: message.value,
+      category: category.value || 'user-added',
+    }
+
+    await registerMarker(newMarker)
+    const updatedMarkers = await fetchMarkers()
+    places.value = updatedMarkers
+    message.value = ''
+    category.value = ''
+
+    alertType.value = 'success'
+    alertMessage.value = 'マーカーが正常に登録されました'
+    showAlert.value = true
+
+    setTimeout(() => {
+      showAlert.value = false
+    }, 5000)
+  } catch (error) {
+    console.error('Error registering marker:', error)
+
+    alertType.value = 'error'
+    alertMessage.value = 'マーカーの登録に失敗しました'
+    showAlert.value = true
+  }
+}
+
+onMounted(async () => {
+  try {
+    const data = await fetchMarkers()
+    places.value = data
+    console.log('Loaded markers:', places.value)
+  } catch (error) {
+    console.error('Error loading markers:', error)
+  }
+})
+</script>
+
+<style scoped>
+.container-wrapper {
+  position: relative;
+}
+
+.menu-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+}
+
+#leaflet-tooltip-113 {
+  background-color: transparent;
+  border: transparent;
+  box-shadow: none;
+}
+
+:deep(.custom-tooltip) {
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  padding: 4px 8px;
+}
+
+:deep(.v-alert) {
+  margin-bottom: 0;
+}
+</style>
