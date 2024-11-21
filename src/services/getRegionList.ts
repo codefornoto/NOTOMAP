@@ -1,20 +1,20 @@
 import { GAS_URL } from '../config'
 
-interface MarkerResponse {
+interface RegionListResponse {
   status: string
   data: {
     id: number
-    lat: string
-    lng: string
-    message: string
-    category?: string
+    name: string
+    address: string
+    latitude: string
+    longitude: string
   }[]
 }
 
 export async function fetchMarkers() {
   try {
-    const response = await fetch(`${GAS_URL}?sheetName=Marker`)
-    const data: MarkerResponse = await response.json()
+    const response = await fetch(`${GAS_URL}?sheetName=master`)
+    const data: RegionListResponse = await response.json()
 
     if (data.status === 'success') {
       return data.data
