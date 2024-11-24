@@ -3,5 +3,6 @@ export interface Marker {
   lat: string
   lng: string
   message: string
-  category?: string
+  category: string
+  region: string
 }

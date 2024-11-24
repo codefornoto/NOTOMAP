@@ -1,47 +1,70 @@
-function doGet() {
-  return getMarkersAsJson()
+function doGet(e) {
+  const sheetName = e.parameter.sheetName
+  return getMarkersAsJson(sheetName, e)
 }
 
-function getMarkersAsJson() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet()
+function getMarkersAsJson(sheetName, e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName)
   const data = sheet.getDataRange().getValues()
   const headers = data[0]
-  const markers = []
+  const items = []
 
   // ヘッダー行をスキップしてデータを処理
   for (let i = 1; i < data.length; i++) {
     const row = data[i]
-    const marker = {
-      id: row[headers.indexOf('ID')],
-      lat: row[headers.indexOf('lat')],
-      lng: row[headers.indexOf('lng')],
-      message: row[headers.indexOf('message')],
-      category: row[headers.indexOf('category')],
+    let item
+
+    if (sheetName === 'master') {
+      item = createMasterItem(row, headers)
+    } else if (sheetName === 'Marker') {
+      const regionParam = e.parameter.region
+      if (regionParam === 'all' || !regionParam || row[headers.indexOf('region')] === regionParam) {
+        item = createMarkerItem(row, headers)
+      } else {
+        continue
+      }
     }
-    markers.push(marker)
+
+    items.push(item)
   }
 
+  Logger.log(items)
   // JSONとしてレスポンスを返す
   return ContentService.createTextOutput(
     JSON.stringify({
       status: 'success',
-      data: markers,
+      data: items,
     }),
   ).setMimeType(ContentService.MimeType.JSON)
 }
 
+function createMasterItem(row, headers) {
+  return {
+    id: row[headers.indexOf('id')],
+    name: row[headers.indexOf('name')],
+    address: row[headers.indexOf('address')],
+    latitude: row[headers.indexOf('latitude')],
+    longitude: row[headers.indexOf('longitude')],
+  }
+}
+
+function createMarkerItem(row, headers) {
+  return {
+    id: row[headers.indexOf('ID')],
+    lat: row[headers.indexOf('lat')],
+    lng: row[headers.indexOf('lng')],
+    message: row[headers.indexOf('message')],
+    category: row[headers.indexOf('category')],
+    region: row[headers.indexOf('region')],
+  }
+}
+
 // スプレッドシートにマーカーを追加する関数
-function addMarker(marker) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet()
+function addMarker(marker, sheetName) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName)
   const lastRow = sheet.getLastRow()
 
-  sheet.appendRow([
-    lastRow, // ID を自動採番
-    marker.lat,
-    marker.lng,
-    marker.message,
-    marker.category || '', // categoryが無い場合は空文字を設定
-  ])
+  sheet.appendRow([lastRow, marker.lat, marker.lng, marker.message, marker.category, marker.region])
 
   return true
 }
@@ -49,7 +72,7 @@ function addMarker(marker) {
 function doPost(e) {
   try {
     const postData = JSON.parse(e.postData.contents)
-    const result = addMarker(postData)
+    const result = addMarker(postData, 'Marker')
 
     return ContentService.createTextOutput(
       JSON.stringify({
@@ -65,4 +88,11 @@ function doPost(e) {
       }),
     ).setMimeType(ContentService.MimeType.JSON)
   }
+}
+
+function test() {
+  const sheetName = 'master' // シート名を'master'に指定
+  const e = { parameter: { sheetName: sheetName } } // 引数オブジェクトを作成
+  const result = doGet(e) // doGet関数を呼び出す
+  Logger.log(result) // 結果をログに出力
 }

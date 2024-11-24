@@ -3,6 +3,7 @@ import type { Marker } from '../types/marker'
 
 export async function registerMarker(markerData: Partial<Marker>) {
   try {
+    console.log(markerData)
     const response = await fetch(GAS_URL, {
       method: 'POST',
       body: JSON.stringify(markerData),
