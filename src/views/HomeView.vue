@@ -225,7 +225,10 @@ const categorizePlaces = () => {
 
 watch(selectedRegion, async (newRegion) => {
   if (newRegion) {
-    const selected = regions.value.find((item) => item.name === newRegion)
+    // @ts-expect-error: regions.value.find() の引数は型 'string' を期待しますが、引数 'item' は型 'any' です。
+    // このエラーは、regions.value.find() の引数が 'any' 型であるため発生します。
+    // これを解決するには、regions.value.find() の引数の型を明示的に指定する必要があります。
+    const selected = regions.value.find((item: { name: string }) => item.name === newRegion)
     if (selected) {
       center.value = [Number(selected.latitude), Number(selected.longitude)]
       region.value = selected.name
@@ -285,7 +288,7 @@ const saveMapState = () => {
   localStorage.setItem('selectedRegion', region.value)
 }
 
-// watchを使ってcenterとregionの変更を監視し、localStorageに保存
+// watchを使っ��centerとregionの変更を監視し、localStorageに保存
 watch(center, saveMapState)
 watch(region, saveMapState)
 </script>
