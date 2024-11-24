@@ -18,6 +18,7 @@
               attribution="&copy; <a href='http://osm.org/copyright'>OpenStreetMap</a> contributors"
             >
             </l-tile-layer>
+            <l-marker :lat-lng="[Number(inputLat), Number(inputLon)]"> </l-marker>
             <template v-for="(markerGroup, category) in categorizedPlaces" :key="category">
               <template v-if="isCategoryVisible(category)">
                 <l-marker
@@ -141,24 +142,29 @@ import { registerMarker } from '../services/registerMarker'
 
 const route = useRoute()
 const mode = route.query.mode
-
-const centerLat = 37.39225471283128
-const centerLng = 136.9037461280823
 const zoom = ref<number>(route.query.zoom ? Number(route.query.zoom) : 15)
-
 const places = ref<Marker[]>([])
 const windowSize = ref(12)
-const center = ref([centerLat, centerLng])
+const center = ref([37.39225471283128, 136.9037461280823])
 const inputLat = ref(35.6769883)
 const inputLon = ref(139.7588499)
 const message = ref('')
 const category = ref('')
-const region = ref('')
-const selectedRegion = ref<Region | null>(null)
+const region = ref('all')
+const selectedRegion = ref<Region>({
+  id: 0,
+  name: '全地域',
+  address: '',
+  latitude: '',
+  longitude: '',
+})
 const regions = ref<Region[]>([])
-
 const categorizedPlaces = ref<{ [key: string]: Marker[] }>({})
 const visibleCategories = ref<{ [key: string]: boolean }>({})
+const showAlert = ref(false)
+const alertMessage = ref('')
+const alertType = ref<'success' | 'error'>('success')
+
 const isCategoryVisible = (category: string | number) => {
   return visibleCategories.value[category] !== false
 }
@@ -174,10 +180,6 @@ const moveMarker = (e: { latlng?: { lat: number; lng: number } }) => {
 function openMenu() {
   windowSize.value = windowSize.value === 8 ? 12 : 8
 }
-
-const showAlert = ref(false)
-const alertMessage = ref('')
-const alertType = ref<'success' | 'error'>('success')
 
 function showMessage(type: 'success' | 'error', message: string) {
   alertType.value = type
@@ -223,7 +225,7 @@ const categorizePlaces = () => {
 
 watch(selectedRegion, async (newRegion) => {
   if (newRegion) {
-    const selected = regions.value.find((region) => region.name === newRegion)
+    const selected = regions.value.find((item) => item.name === newRegion)
     if (selected) {
       center.value = [Number(selected.latitude), Number(selected.longitude)]
       region.value = selected.name
@@ -246,7 +248,16 @@ async function getMarker(region: string) {
     visibleCategories.value[category] = true
   })
 }
+
+const moveCenter = (lat: number, lng: number) => {
+  center.value = [lat, lng] // 中心位置を更新
+}
+
+// 画面起動時にlocalStorageから値を取得
 onMounted(async () => {
+  const savedCenter = localStorage.getItem('mapCenter')
+  const savedRegion = localStorage.getItem('selectedRegion')
+
   try {
     const regionData = await fetchRegionList()
     regions.value = regionData
@@ -254,7 +265,29 @@ onMounted(async () => {
   } catch (error) {
     console.error('Error loading markers:', error)
   }
+  if (savedCenter) {
+    const [lat, lng] = JSON.parse(savedCenter)
+    moveCenter(lat, lng)
+  }
+  if (savedRegion) {
+    const target = regions.value.find((item) => item.name === savedRegion)
+    if (target) {
+      selectedRegion.value = target
+    }
+  }
+  // 初期マーカーを取得
+  getMarker(region.value || 'all')
 })
+
+// centerとregionをlocalStorageに保存する関数
+const saveMapState = () => {
+  localStorage.setItem('mapCenter', JSON.stringify(center.value))
+  localStorage.setItem('selectedRegion', region.value)
+}
+
+// watchを使ってcenterとregionの変更を監視し、localStorageに保存
+watch(center, saveMapState)
+watch(region, saveMapState)
 </script>
 
 <style scoped>
