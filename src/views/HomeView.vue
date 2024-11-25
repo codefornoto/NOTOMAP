@@ -142,6 +142,7 @@ import { registerMarker } from '../services/registerMarker'
 
 const route = useRoute()
 const mode = route.query.mode
+const regionId = route.query.region
 const zoom = ref<number>(route.query.zoom ? Number(route.query.zoom) : 15)
 const places = ref<Marker[]>([])
 const windowSize = ref(12)
@@ -152,7 +153,7 @@ const message = ref('')
 const category = ref('')
 const region = ref('all')
 const selectedRegion = ref<Region>({
-  id: 0,
+  id: 'all',
   name: '全地域',
   address: '',
   latitude: '',
@@ -229,6 +230,8 @@ watch(selectedRegion, async (newRegion) => {
     // このエラーは、regions.value.find() の引数が 'any' 型であるため発生します。
     // これを解決するには、regions.value.find() の引数の型を明示的に指定する必要があります。
     const selected = regions.value.find((item: { name: string }) => item.name === newRegion)
+    console.log(newRegion)
+    console.log(selected)
     if (selected) {
       center.value = [Number(selected.latitude), Number(selected.longitude)]
       region.value = selected.name
@@ -252,45 +255,30 @@ async function getMarker(region: string) {
   })
 }
 
-const moveCenter = (lat: number, lng: number) => {
-  center.value = [lat, lng] // 中心位置を更新
-}
-
 // 画面起動時にlocalStorageから値を取得
 onMounted(async () => {
-  const savedCenter = localStorage.getItem('mapCenter')
-  const savedRegion = localStorage.getItem('selectedRegion')
-
   try {
     const regionData = await fetchRegionList()
     regions.value = regionData
-    await getMarker('all')
+    // await getMarker('all')
   } catch (error) {
     console.error('Error loading markers:', error)
   }
-  if (savedCenter) {
-    const [lat, lng] = JSON.parse(savedCenter)
-    moveCenter(lat, lng)
-  }
-  if (savedRegion) {
-    const target = regions.value.find((item) => item.name === savedRegion)
-    if (target) {
-      selectedRegion.value = target
+
+  if (regionId) {
+    const targetRegion = regions.value.find((item) => item.id === regionId)
+    console.log(regionId)
+    if (targetRegion) {
+      selectedRegion.value = targetRegion
+      region.value = targetRegion.name
+      center.value = [Number(targetRegion.latitude), Number(targetRegion.longitude)]
+      await getMarker(targetRegion.name)
     }
   }
+
   // 初期マーカーを取得
   getMarker(region.value || 'all')
 })
-
-// centerとregionをlocalStorageに保存する関数
-const saveMapState = () => {
-  localStorage.setItem('mapCenter', JSON.stringify(center.value))
-  localStorage.setItem('selectedRegion', region.value)
-}
-
-// watchを使っ��centerとregionの変更を監視し、localStorageに保存
-watch(center, saveMapState)
-watch(region, saveMapState)
 </script>
 
 <style scoped>
