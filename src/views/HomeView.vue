@@ -274,6 +274,7 @@ function resetVisibleCategory() {
   Object.keys(categorizedPlaces.value).forEach((category) => {
     visibleCategories.value[category] = true
   })
+  toggleAll.value = true
   console.log('resetVisibleCategory')
 }
 
