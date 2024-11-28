@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: コードのチェックアウト
+        uses: actions/checkout@v2
+
+      - name: Node.jsのセットアップ
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20' # 使用するNode.jsのバージョンを指定
+
+      - name: 依存関係のインストール
+        run: npm ci
+
+      - name: ビルドの実行
+        run: npm run build
