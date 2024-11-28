@@ -118,8 +118,25 @@
             </v-select>
           </v-col>
         </v-row>
+        <v-divider></v-divider>
         <v-row>
-          <v-col cols="3" v-for="category in Object.keys(categorizedPlaces)" :key="category">
+          <v-col class="mt-4"> カテゴリ別表示 </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12" class="py-0">
+            <v-radio-group inline v-model="toggleAll" @change="toggleAllCategories(toggleAll)">
+              <v-radio label="すべて表示" :value="true"></v-radio>
+              <v-radio label="すべて非表示" :value="false"></v-radio>
+            </v-radio-group>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col
+            cols="3"
+            class="py-0"
+            v-for="category in Object.keys(categorizedPlaces)"
+            :key="category"
+          >
             <v-checkbox v-model="visibleCategories[category]" :label="category"></v-checkbox>
           </v-col>
         </v-row>
@@ -165,6 +182,7 @@ const visibleCategories = ref<{ [key: string]: boolean }>({})
 const showAlert = ref(false)
 const alertMessage = ref('')
 const alertType = ref<'success' | 'error'>('success')
+const toggleAll = ref(true)
 
 const isCategoryVisible = (category: string | number) => {
   return visibleCategories.value[category] !== false
@@ -203,6 +221,7 @@ const register = async () => {
 
     await registerMarker(newMarker)
     await getMarker(region.value)
+    visibleCategories.value[newMarker.category] = true
     message.value = ''
 
     showMessage('success', 'マーカーが正常に登録されました')
@@ -230,8 +249,6 @@ watch(selectedRegion, async (newRegion) => {
     // このエラーは、regions.value.find() の引数が 'any' 型であるため発生します。
     // これを解決するには、regions.value.find() の引数の型を明示的に指定する必要があります。
     const selected = regions.value.find((item: { name: string }) => item.name === newRegion)
-    console.log(newRegion)
-    console.log(selected)
     if (selected) {
       center.value = [Number(selected.latitude), Number(selected.longitude)]
       region.value = selected.name
@@ -239,6 +256,7 @@ watch(selectedRegion, async (newRegion) => {
 
       try {
         await getMarker(region.value)
+        resetVisibleCategory()
       } catch {
         //
       }
@@ -250,8 +268,18 @@ async function getMarker(region: string) {
   const data = await fetchMarkers(region)
   places.value = data
   categorizePlaces()
+}
+
+function resetVisibleCategory() {
   Object.keys(categorizedPlaces.value).forEach((category) => {
     visibleCategories.value[category] = true
+  })
+  console.log('resetVisibleCategory')
+}
+
+const toggleAllCategories = (value: boolean) => {
+  Object.keys(visibleCategories.value).forEach((category) => {
+    visibleCategories.value[category] = value
   })
 }
 
@@ -260,24 +288,21 @@ onMounted(async () => {
   try {
     const regionData = await fetchRegionList()
     regions.value = regionData
-    // await getMarker('all')
   } catch (error) {
     console.error('Error loading markers:', error)
   }
 
   if (regionId) {
     const targetRegion = regions.value.find((item) => item.id === regionId)
-    console.log(regionId)
     if (targetRegion) {
       selectedRegion.value = targetRegion
       region.value = targetRegion.name
       center.value = [Number(targetRegion.latitude), Number(targetRegion.longitude)]
-      await getMarker(targetRegion.name)
     }
   }
 
-  // 初期マーカーを取得
-  getMarker(region.value || 'all')
+  await getMarker(region.value || 'all')
+  resetVisibleCategory()
 })
 </script>
 
