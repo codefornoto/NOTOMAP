@@ -106,7 +106,7 @@
               @click:close="showAlert = false"
             ></v-alert>
           </v-col>
-          <v-col cols="12">
+          <v-col cols="10">
             <v-select
               v-model="selectedRegion"
               :items="regions"
@@ -117,6 +117,7 @@
             >
             </v-select>
           </v-col>
+          <v-col class="mt-6 px-0"> 全{{ placeCount }}件 </v-col>
         </v-row>
         <v-divider></v-divider>
         <v-row>
@@ -146,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import 'leaflet/dist/leaflet.css'
 import { LMap, LTileLayer, LMarker, LIcon } from '@vue-leaflet/vue-leaflet'
 import { LTooltip } from '@vue-leaflet/vue-leaflet'
@@ -183,6 +184,9 @@ const showAlert = ref(false)
 const alertMessage = ref('')
 const alertType = ref<'success' | 'error'>('success')
 const toggleAll = ref(true)
+const placeCount = computed(() => {
+  return places.value.length
+})
 
 const isCategoryVisible = (category: string | number) => {
   return visibleCategories.value[category] !== false
