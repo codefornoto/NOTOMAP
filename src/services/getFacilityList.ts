@@ -1,12 +1,12 @@
 import { GAS_URL } from '../config'
-import type { Region } from '../types/region'
+import type { Facility } from '../types/facility'
 
 interface RegionListResponse {
   status: string
-  data: Region[]
+  data: Facility[]
 }
 
-export async function fetchRegionList(sheetName: string) {
+export async function fetchFacilityList(sheetName: string) {
   try {
     const response = await fetch(`${GAS_URL}?sheetName=${sheetName}`)
     const data: RegionListResponse = await response.json()

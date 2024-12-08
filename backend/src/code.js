@@ -23,6 +23,8 @@ function getMarkersAsJson(sheetName, e) {
       } else {
         continue
       }
+    } else {
+      item = createFacilityItem(row, headers)
     }
 
     items.push(item)
@@ -56,6 +58,15 @@ function createMarkerItem(row, headers) {
     message: row[headers.indexOf('message')],
     category: row[headers.indexOf('category')],
     region: row[headers.indexOf('region')],
+  }
+}
+
+function createFacilityItem(row, headers) {
+  return {
+    id: row[headers.indexOf('ID')],
+    lat: row[headers.indexOf('lat')],
+    lng: row[headers.indexOf('lng')],
+    name: row[headers.indexOf('name')],
   }
 }
 
@@ -93,6 +104,13 @@ function doPost(e) {
 function test() {
   const sheetName = 'master' // シート名を'master'に指定
   const e = { parameter: { sheetName: sheetName } } // 引数オブジェクトを作成
+  const result = doGet(e) // doGet関数を呼び出す
+  Logger.log(result) // 結果をログに出力
+}
+
+function testGet() {
+  const sheetName = 'Marker' // シート名を'master'に指定
+  const e = { parameter: { sheetName: sheetName, region: '輪島市' } } // 引数オブジェクトを作成
   const result = doGet(e) // doGet関数を呼び出す
   Logger.log(result) // 結果をログに出力
 }
