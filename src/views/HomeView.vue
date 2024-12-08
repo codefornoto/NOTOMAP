@@ -43,6 +43,49 @@
                 </l-marker>
               </template>
             </template>
+            <template v-if="showEvacuationSpace">
+              <l-marker
+                v-for="place in evacuationSpace"
+                :key="place.id"
+                :lat-lng="[Number(place.lat), Number(place.lng)]"
+              >
+                <l-icon
+                  :icon-url="'data:image/svg+xml;utf8,' + encodeURIComponent(mdiExitRunSvg)"
+                  :icon-size="[30, 30]"
+                  :style="{ color: 'green', opacity: 0.9 }"
+                ></l-icon>
+              </l-marker>
+            </template>
+            <template v-if="showPreschool">
+              <l-marker
+                v-for="place in preschool"
+                :key="place.id"
+                :lat-lng="[Number(place.lat), Number(place.lng)]"
+              >
+                <l-icon
+                  :icon-url="
+                    'data:image/svg+xml;utf8,' + encodeURIComponent(mdiHumanMaleMaleChildSvg)
+                  "
+                  :icon-size="[30, 30]"
+                  :style="{ color: 'green', opacity: 0.9 }"
+                ></l-icon>
+              </l-marker>
+            </template>
+            <template v-if="showPublicFacility">
+              <l-marker
+                v-for="place in publicFacility"
+                :key="place.id"
+                :lat-lng="[Number(place.lat), Number(place.lng)]"
+              >
+                <l-icon
+                  :icon-url="
+                    'data:image/svg+xml;utf8,' + encodeURIComponent(mdiOfficeBuildingMarkerSvg)
+                  "
+                  :icon-size="[30, 30]"
+                  :style="{ color: 'green', opacity: 0.9 }"
+                ></l-icon>
+              </l-marker>
+            </template>
           </l-map>
         </div>
       </v-col>
@@ -86,7 +129,7 @@
               :items="regions"
               item-title="name"
               item-id="id"
-              label="地域・協議会を入力"
+              label="地域・協議��を入力"
               placeholder="地域・協議会を入力"
               variant="outlined"
             />
@@ -119,7 +162,48 @@
           </v-col>
           <v-col class="mt-6 px-0"> 全{{ placeCount }}件 </v-col>
         </v-row>
+        <!-- 施設の表示 -->
         <v-divider></v-divider>
+        <v-row>
+          <v-col class="mt-4"> 施設の表示 </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="4" class="pt-0">
+            <div
+              @click="toggleVisibility('evacuationSpace')"
+              style="cursor: pointer; display: flex; flex-direction: column; align-items: center"
+            >
+              <v-icon size="48" :class="showEvacuationSpace ? 'green-icon' : 'black-icon'">
+                {{ mdiExitRun }}
+              </v-icon>
+              指定避難所
+            </div>
+          </v-col>
+          <v-col cols="4" class="pt-0">
+            <div
+              @click="toggleVisibility('preschool')"
+              style="cursor: pointer; display: flex; flex-direction: column; align-items: center"
+            >
+              <v-icon size="48" :class="showPreschool ? 'green-icon' : 'black-icon'">
+                {{ mdiHumanMaleMaleChild }}
+              </v-icon>
+              子育て施設
+            </div>
+          </v-col>
+          <v-col cols="4" class="pt-0">
+            <div
+              @click="toggleVisibility('publicFacility')"
+              style="cursor: pointer; display: flex; flex-direction: column; align-items: center"
+            >
+              <v-icon size="48" :class="showPublicFacility ? 'green-icon' : 'black-icon'">
+                {{ mdiOfficeBuildingMarker }}
+              </v-icon>
+              公共施設
+            </div>
+          </v-col>
+        </v-row>
+        <!-- カテゴリ別表示 -->
+        <v-divider class="mt-4"></v-divider>
         <v-row>
           <v-col class="mt-4"> カテゴリ別表示 </v-col>
         </v-row>
@@ -153,10 +237,18 @@ import { LMap, LTileLayer, LMarker, LIcon } from '@vue-leaflet/vue-leaflet'
 import { LTooltip } from '@vue-leaflet/vue-leaflet'
 import type { Marker } from '../types/marker'
 import type { Region } from '../types/region'
+import type { Facility } from '../types/facility'
 import { useRoute } from 'vue-router'
 import { fetchMarkers } from '../services/getMarkers'
 import { fetchRegionList } from '../services/getRegionList'
+import { fetchFacilityList } from '../services/getFacilityList'
 import { registerMarker } from '../services/registerMarker'
+import { mdiExitRun } from '@mdi/js'
+import { mdiHumanMaleMaleChild } from '@mdi/js'
+import { mdiOfficeBuildingMarker } from '@mdi/js'
+const mdiExitRunSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="${mdiExitRun}" fill="green"/></svg>`
+const mdiHumanMaleMaleChildSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="${mdiHumanMaleMaleChild}" fill="green"/></svg>`
+const mdiOfficeBuildingMarkerSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="${mdiOfficeBuildingMarker}" fill="green"/></svg>`
 
 const route = useRoute()
 const mode = route.query.mode
@@ -187,6 +279,14 @@ const toggleAll = ref(true)
 const placeCount = computed(() => {
   return places.value.length
 })
+
+// 施設データ
+const evacuationSpace = ref<Facility[]>([])
+const publicFacility = ref<Facility[]>([])
+const preschool = ref<Facility[]>([])
+const showEvacuationSpace = ref(false)
+const showPublicFacility = ref(false)
+const showPreschool = ref(false)
 
 const isCategoryVisible = (category: string | number) => {
   return visibleCategories.value[category] !== false
@@ -249,7 +349,7 @@ const categorizePlaces = () => {
 
 watch(selectedRegion, async (newRegion) => {
   if (newRegion) {
-    // @ts-expect-error: regions.value.find() の引数は型 'string' を期待しますが、引数 'item' は型 'any' です。
+    // @ts-expect-error: regions.value.find() の引数は型 'string' を期待しますが、引数 'item' は型 'any' で。
     // このエラーは、regions.value.find() の引数が 'any' 型であるため発生します。
     // これを解決するには、regions.value.find() の引数の型を明示的に指定する必要があります。
     const selected = regions.value.find((item: { name: string }) => item.name === newRegion)
@@ -287,12 +387,23 @@ const toggleAllCategories = (value: boolean) => {
     visibleCategories.value[category] = value
   })
 }
-
 // 画面起動時にlocalStorageから値を取得
 onMounted(async () => {
   try {
-    const regionData = await fetchRegionList()
+    const regionData = await fetchRegionList('master')
     regions.value = regionData
+
+    // Promise.allを使用して複数の非同期処理をまとめて実行
+    const [evacuationData, publicFacilityData, preschoolData] = await Promise.all([
+      fetchFacilityList('evacuation_space'),
+      fetchFacilityList('public_facility'),
+      fetchFacilityList('preschool'),
+    ])
+
+    evacuationSpace.value = evacuationData
+    publicFacility.value = publicFacilityData
+    preschool.value = preschoolData
+    console.log(evacuationData)
   } catch (error) {
     console.error('Error loading markers:', error)
   }
@@ -309,6 +420,16 @@ onMounted(async () => {
   await getMarker(region.value || 'all')
   resetVisibleCategory()
 })
+
+const toggleVisibility = (type: 'evacuationSpace' | 'preschool' | 'publicFacility') => {
+  if (type === 'evacuationSpace') {
+    showEvacuationSpace.value = !showEvacuationSpace.value
+  } else if (type === 'preschool') {
+    showPreschool.value = !showPreschool.value
+  } else if (type === 'publicFacility') {
+    showPublicFacility.value = !showPublicFacility.value
+  }
+}
 </script>
 
 <style scoped>
@@ -331,5 +452,19 @@ onMounted(async () => {
 
 :deep(.v-alert) {
   margin-bottom: 0;
+}
+
+.green-icon {
+  color: green;
+}
+.black-icon {
+  color: black;
+}
+
+.icon-checkbox-on {
+  background-image: url(@/src//assets/exit-run.svg);
+}
+.icon-checkbox-off {
+  background-image: url(@/assets/exit-run.svg);
 }
 </style>
