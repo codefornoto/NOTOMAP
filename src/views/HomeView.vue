@@ -129,7 +129,7 @@
               :items="regions"
               item-title="name"
               item-id="id"
-              label="地域・協議��を入力"
+              label="地域・協議会を入力"
               placeholder="地域・協議会を入力"
               variant="outlined"
             />
