@@ -460,11 +460,4 @@ const toggleVisibility = (type: 'evacuationSpace' | 'preschool' | 'publicFacilit
 .black-icon {
   color: black;
 }
-
-.icon-checkbox-on {
-  background-image: url(@/src//assets/exit-run.svg);
-}
-.icon-checkbox-off {
-  background-image: url(@/assets/exit-run.svg);
-}
 </style>
