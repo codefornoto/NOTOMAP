@@ -12,6 +12,11 @@ export async function fetchFacilityList(sheetName: string) {
     const data: RegionListResponse = await response.json()
 
     if (data.status === 'success') {
+      // evacuationSpaceにshowTooltipを追加
+      data.data.map((place) => ({
+        ...place,
+        showTooltip: false, // showTooltipプロパティを初期化
+      }))
       return data.data
     }
     throw new Error('Failed to fetch regions')

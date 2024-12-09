@@ -10,6 +10,7 @@
             :use-global-leaflet="false"
             :center="center"
             @click="moveMarker"
+            :options="leafletMapOptions"
           >
             <l-tile-layer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -48,12 +49,25 @@
                 v-for="place in evacuationSpace"
                 :key="place.id"
                 :lat-lng="[Number(place.lat), Number(place.lng)]"
+                @click="place.showTooltip = !place.showTooltip"
               >
                 <l-icon
                   :icon-url="'data:image/svg+xml;utf8,' + encodeURIComponent(mdiExitRunSvg)"
                   :icon-size="[30, 30]"
                   :style="{ color: 'green', opacity: 0.9 }"
-                ></l-icon>
+                >
+                </l-icon>
+                <l-tooltip
+                  v-if="place.showTooltip"
+                  :options="{
+                    permanent: true,
+                    interactive: true,
+                    opacity: 0.9,
+                    className: 'custom-tooltip',
+                  }"
+                >
+                  {{ place.name }}
+                </l-tooltip>
               </l-marker>
             </template>
             <template v-if="showPreschool">
@@ -61,6 +75,7 @@
                 v-for="place in preschool"
                 :key="place.id"
                 :lat-lng="[Number(place.lat), Number(place.lng)]"
+                @click="place.showTooltip = !place.showTooltip"
               >
                 <l-icon
                   :icon-url="
@@ -69,6 +84,17 @@
                   :icon-size="[30, 30]"
                   :style="{ color: 'green', opacity: 0.9 }"
                 ></l-icon>
+                <l-tooltip
+                  v-if="place.showTooltip"
+                  :options="{
+                    permanent: true,
+                    interactive: true,
+                    opacity: 0.9,
+                    className: 'custom-tooltip',
+                  }"
+                >
+                  {{ place.name }}
+                </l-tooltip>
               </l-marker>
             </template>
             <template v-if="showPublicFacility">
@@ -76,6 +102,7 @@
                 v-for="place in publicFacility"
                 :key="place.id"
                 :lat-lng="[Number(place.lat), Number(place.lng)]"
+                @click="place.showTooltip = !place.showTooltip"
               >
                 <l-icon
                   :icon-url="
@@ -84,6 +111,17 @@
                   :icon-size="[30, 30]"
                   :style="{ color: 'green', opacity: 0.9 }"
                 ></l-icon>
+                <l-tooltip
+                  v-if="place.showTooltip"
+                  :options="{
+                    permanent: true,
+                    interactive: true,
+                    opacity: 0.9,
+                    className: 'custom-tooltip',
+                  }"
+                >
+                  {{ place.name }}
+                </l-tooltip>
               </l-marker>
             </template>
           </l-map>
@@ -288,6 +326,10 @@ const showEvacuationSpace = ref(false)
 const showPublicFacility = ref(false)
 const showPreschool = ref(false)
 
+const leafletMapOptions = {
+  doubleClickZoom: false,
+}
+
 const isCategoryVisible = (category: string | number) => {
   return visibleCategories.value[category] !== false
 }
@@ -349,7 +391,7 @@ const categorizePlaces = () => {
 
 watch(selectedRegion, async (newRegion) => {
   if (newRegion) {
-    // @ts-expect-error: regions.value.find() の引数は型 'string' を期待しますが、引数 'item' は型 'any' で。
+    // @ts-expect-error: regions.value.find() の引数は型 'string' を期待しますが、数 'item' は型 'any' で。
     // このエラーは、regions.value.find() の引数が 'any' 型であるため発生します。
     // これを解決するには、regions.value.find() の引数の型を明示的に指定する必要があります。
     const selected = regions.value.find((item: { name: string }) => item.name === newRegion)
@@ -379,7 +421,6 @@ function resetVisibleCategory() {
     visibleCategories.value[category] = true
   })
   toggleAll.value = true
-  console.log('resetVisibleCategory')
 }
 
 const toggleAllCategories = (value: boolean) => {
@@ -403,7 +444,6 @@ onMounted(async () => {
     evacuationSpace.value = evacuationData
     publicFacility.value = publicFacilityData
     preschool.value = preschoolData
-    console.log(evacuationData)
   } catch (error) {
     console.error('Error loading markers:', error)
   }
