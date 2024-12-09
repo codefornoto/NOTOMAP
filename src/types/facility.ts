@@ -3,4 +3,5 @@ export interface Facility {
   lat: string
   lng: string
   name: string
+  showTooltip: boolean
 }
