@@ -18,7 +18,8 @@
     "@mdi/font": "^7.4.47",
     "@mdi/js": "^7.4.47",
     "vue": "^3.5.12",
-    "vue-router": "^4.4.5"
+    "vue-router": "^4.4.5",
+    "vue3-lottie": "^3.3.1"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.0",
