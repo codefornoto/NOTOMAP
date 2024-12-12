@@ -44,86 +44,21 @@
                 </l-marker>
               </template>
             </template>
-            <template v-if="showEvacuationSpace">
-              <l-marker
-                v-for="place in evacuationSpace"
-                :key="place.id"
-                :lat-lng="[Number(place.lat), Number(place.lng)]"
-                @click="place.showTooltip = !place.showTooltip"
-              >
-                <l-icon
-                  :icon-url="'data:image/svg+xml;utf8,' + encodeURIComponent(mdiExitRunSvg)"
-                  :icon-size="[30, 30]"
-                  :style="{ color: 'green', opacity: 0.9 }"
-                >
-                </l-icon>
-                <l-tooltip
-                  v-if="place.showTooltip"
-                  :options="{
-                    permanent: true,
-                    interactive: true,
-                    opacity: 0.9,
-                    className: 'custom-tooltip',
-                  }"
-                >
-                  {{ place.name }}
-                </l-tooltip>
-              </l-marker>
-            </template>
-            <template v-if="showPreschool">
-              <l-marker
-                v-for="place in preschool"
-                :key="place.id"
-                :lat-lng="[Number(place.lat), Number(place.lng)]"
-                @click="place.showTooltip = !place.showTooltip"
-              >
-                <l-icon
-                  :icon-url="
-                    'data:image/svg+xml;utf8,' + encodeURIComponent(mdiHumanMaleMaleChildSvg)
-                  "
-                  :icon-size="[30, 30]"
-                  :style="{ color: 'green', opacity: 0.9 }"
-                ></l-icon>
-                <l-tooltip
-                  v-if="place.showTooltip"
-                  :options="{
-                    permanent: true,
-                    interactive: true,
-                    opacity: 0.9,
-                    className: 'custom-tooltip',
-                  }"
-                >
-                  {{ place.name }}
-                </l-tooltip>
-              </l-marker>
-            </template>
-            <template v-if="showPublicFacility">
-              <l-marker
-                v-for="place in publicFacility"
-                :key="place.id"
-                :lat-lng="[Number(place.lat), Number(place.lng)]"
-                @click="place.showTooltip = !place.showTooltip"
-              >
-                <l-icon
-                  :icon-url="
-                    'data:image/svg+xml;utf8,' + encodeURIComponent(mdiOfficeBuildingMarkerSvg)
-                  "
-                  :icon-size="[30, 30]"
-                  :style="{ color: 'green', opacity: 0.9 }"
-                ></l-icon>
-                <l-tooltip
-                  v-if="place.showTooltip"
-                  :options="{
-                    permanent: true,
-                    interactive: true,
-                    opacity: 0.9,
-                    className: 'custom-tooltip',
-                  }"
-                >
-                  {{ place.name }}
-                </l-tooltip>
-              </l-marker>
-            </template>
+            <TheFacility
+              v-if="showEvacuationSpace"
+              :facilities="evacuationSpace"
+              :icon-svg="mdiExitRunSvg"
+            />
+            <TheFacility
+              v-if="showPreschool"
+              :facilities="preschool"
+              :icon-svg="mdiHumanMaleMaleChildSvg"
+            />
+            <TheFacility
+              v-if="showPublicFacility"
+              :facilities="publicFacility"
+              :icon-svg="mdiOfficeBuildingMarkerSvg"
+            />
           </l-map>
         </div>
       </v-col>
@@ -207,37 +142,28 @@
         </v-row>
         <v-row>
           <v-col cols="4" class="pt-0">
-            <div
+            <TheFacilityMenuBtn
               @click="toggleVisibility('evacuationSpace')"
-              style="cursor: pointer; display: flex; flex-direction: column; align-items: center"
-            >
-              <v-icon size="48" :class="showEvacuationSpace ? 'green-icon' : 'black-icon'">
-                {{ mdiExitRun }}
-              </v-icon>
-              指定避難所
-            </div>
+              :icon="mdiExitRun"
+              :is-show="showEvacuationSpace"
+              :alt="'指定避難所'"
+            />
           </v-col>
           <v-col cols="4" class="pt-0">
-            <div
+            <TheFacilityMenuBtn
               @click="toggleVisibility('preschool')"
-              style="cursor: pointer; display: flex; flex-direction: column; align-items: center"
-            >
-              <v-icon size="48" :class="showPreschool ? 'green-icon' : 'black-icon'">
-                {{ mdiHumanMaleMaleChild }}
-              </v-icon>
-              子育て施設
-            </div>
+              :icon="mdiHumanMaleMaleChild"
+              :is-show="showPreschool"
+              :alt="'子育て施設'"
+            />
           </v-col>
           <v-col cols="4" class="pt-0">
-            <div
+            <TheFacilityMenuBtn
               @click="toggleVisibility('publicFacility')"
-              style="cursor: pointer; display: flex; flex-direction: column; align-items: center"
-            >
-              <v-icon size="48" :class="showPublicFacility ? 'green-icon' : 'black-icon'">
-                {{ mdiOfficeBuildingMarker }}
-              </v-icon>
-              公共施設
-            </div>
+              :icon="mdiOfficeBuildingMarker"
+              :is-show="showPublicFacility"
+              :alt="'公共施設'"
+            />
           </v-col>
         </v-row>
         <!-- カテゴリ別表示 -->
@@ -271,8 +197,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import 'leaflet/dist/leaflet.css'
-import { LMap, LTileLayer, LMarker, LIcon } from '@vue-leaflet/vue-leaflet'
-import { LTooltip } from '@vue-leaflet/vue-leaflet'
+import { LMap, LTileLayer, LMarker, LIcon, LTooltip } from '@vue-leaflet/vue-leaflet'
 import type { Marker } from '../types/marker'
 import type { Region } from '../types/region'
 import type { Facility } from '../types/facility'
@@ -281,12 +206,16 @@ import { fetchMarkers } from '../services/getMarkers'
 import { fetchRegionList } from '../services/getRegionList'
 import { fetchFacilityList } from '../services/getFacilityList'
 import { registerMarker } from '../services/registerMarker'
+// icon
 import { mdiExitRun } from '@mdi/js'
 import { mdiHumanMaleMaleChild } from '@mdi/js'
 import { mdiOfficeBuildingMarker } from '@mdi/js'
 const mdiExitRunSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="${mdiExitRun}" fill="green"/></svg>`
 const mdiHumanMaleMaleChildSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="${mdiHumanMaleMaleChild}" fill="green"/></svg>`
 const mdiOfficeBuildingMarkerSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="${mdiOfficeBuildingMarker}" fill="green"/></svg>`
+// component
+import TheFacility from '@/components/TheFacility.vue'
+import TheFacilityMenuBtn from '@/components/TheFacilityMenuBtn.vue'
 
 const route = useRoute()
 const mode = route.query.mode
@@ -492,12 +421,5 @@ const toggleVisibility = (type: 'evacuationSpace' | 'preschool' | 'publicFacilit
 
 :deep(.v-alert) {
   margin-bottom: 0;
-}
-
-.green-icon {
-  color: green;
-}
-.black-icon {
-  color: black;
 }
 </style>
