@@ -1,5 +1,8 @@
 <template>
-  <v-container fluid class="pa-0 container-wrapper">
+  <div v-if="loading" class="lottie-container">
+    <Vue3Lottie :animationData="AstronautJSON" height="40vh" />
+  </div>
+  <v-container v-else fluid class="pa-0 container-wrapper">
     <v-app-bar-nav-icon class="menu-button" @click="openMenu"></v-app-bar-nav-icon>
     <v-row class="ma-0">
       <v-col class="pa-0" :cols="windowSize">
@@ -216,7 +219,9 @@ const mdiOfficeBuildingMarkerSvg = `<svg xmlns="http://www.w3.org/2000/svg" view
 // component
 import TheFacility from '@/components/TheFacility.vue'
 import TheFacilityMenuBtn from '@/components/TheFacilityMenuBtn.vue'
+import AstronautJSON from '../assets/map.json'
 
+const loading = ref(true)
 const route = useRoute()
 const mode = route.query.mode
 const regionId = route.query.region
@@ -385,7 +390,9 @@ onMounted(async () => {
       center.value = [Number(targetRegion.latitude), Number(targetRegion.longitude)]
     }
   }
-
+  setTimeout(() => {
+    loading.value = false
+  }, 500)
   await getMarker(region.value || 'all')
   resetVisibleCategory()
 })
@@ -421,5 +428,12 @@ const toggleVisibility = (type: 'evacuationSpace' | 'preschool' | 'publicFacilit
 
 :deep(.v-alert) {
   margin-bottom: 0;
+}
+
+.lottie-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; /* 画面全体をカバー */
 }
 </style>
